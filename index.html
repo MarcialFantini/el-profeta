@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#000000">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;600;700&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&family=UnifrakturMaguntia&family=Homemade+Apple&display=swap" rel="stylesheet">
 <style>
   :root {
     --ink: #22120a;
@@ -18,21 +18,33 @@
     --paper-mid: #d3a56b;
     --paper-lo: #b98a52;
     --bar: 9vh;
-    --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .3  0 0 0 0 .17  0 0 0 0 .07  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { height: 100%; background: #000; overflow: hidden; }
   body { font-family: "Old Standard TT", Georgia, serif; color: var(--ink); }
 
-  /* ---------- Film frame ---------- */
+  /* =========================================================
+     FILM FRAME
+     ========================================================= */
   .viewport {
     position: fixed;
     inset: 0;
-    perspective: 1500px;
     background: #1c0e06;
     overflow: hidden;
     cursor: pointer;
+  }
+  .rig {
+    position: absolute;
+    inset: 0;
+    perspective: 1500px;
+    animation: handheld 9s ease-in-out infinite;
+  }
+  @keyframes handheld {
+    0%, 100% { transform: translate(0, 0) rotate(0); }
+    20% { transform: translate(-3px, 2px) rotate(-.08deg); }
+    45% { transform: translate(2px, -2px) rotate(.06deg); }
+    70% { transform: translate(-1px, 3px) rotate(-.04deg); }
   }
   .camera {
     position: absolute;
@@ -40,7 +52,6 @@
     top: 50%;
     width: 0;
     height: 0;
-    transform-style: preserve-3d;
   }
   .wall {
     position: absolute;
@@ -55,39 +66,70 @@
   }
   .wall.lit { opacity: 1; }
 
-  /* Cinematic overlays */
-  .tint, .vignette, .grain, .flicker { position: absolute; inset: 0; pointer-events: none; }
-  .tint {
-    background: radial-gradient(ellipse at 50% 42%, rgba(255,176,96,.10), rgba(130,55,12,.38));
-    mix-blend-mode: multiply;
-  }
-  .vignette { background: radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0,0,0,.82) 100%); }
+  /* Overlays: plain alpha blending only (no blend modes = no full-screen recomposite) */
+  .tint, .vignette, .grain, .flicker, .beam { position: absolute; pointer-events: none; }
+  .tint { inset: 0; background: radial-gradient(ellipse at 50% 42%, rgba(255,170,80,.05), rgba(90,35,5,.30)); }
+  .vignette { inset: 0; background: radial-gradient(ellipse at 50% 50%, transparent 46%, rgba(0,0,0,.84) 100%); }
   .grain {
-    inset: -50%;
-    background-image: var(--noise);
-    opacity: .5;
-    mix-blend-mode: overlay;
-    animation: grainShift .6s steps(4) infinite;
+    inset: -60px;
+    background-image: var(--grain, none);
+    opacity: .16;
+    animation: grainShift .5s steps(4) infinite;
   }
-  .flicker { background: #000; animation: filmFlicker 5s infinite steps(1); }
+  .flicker { inset: 0; background: #000; opacity: .05; animation: filmFlicker 5s infinite steps(1); }
+  .beam {
+    top: -25%;
+    bottom: -25%;
+    left: -45%;
+    width: 38%;
+    background: linear-gradient(90deg, transparent, rgba(255,205,140,.07) 45%, rgba(255,215,160,.10) 50%, rgba(255,205,140,.07) 55%, transparent);
+    animation: beam 17s linear infinite;
+  }
   @keyframes grainShift {
-    0% { transform: translate(0, 0); } 25% { transform: translate(-3%, 2%); }
-    50% { transform: translate(2%, -3%); } 75% { transform: translate(-2%, -1%); } 100% { transform: translate(1%, 2%); }
+    0% { transform: translate(0, 0); } 25% { transform: translate(-31px, 17px); }
+    50% { transform: translate(23px, -29px); } 75% { transform: translate(-13px, -7px); } 100% { transform: translate(9px, 21px); }
   }
   @keyframes filmFlicker {
     0% { opacity: .04; } 13% { opacity: .1; } 14% { opacity: .03; } 47% { opacity: .07; }
     48% { opacity: .14; } 49% { opacity: .05; } 82% { opacity: .08; } 100% { opacity: .04; }
   }
+  @keyframes beam { from { transform: translateX(0) skewX(-18deg); } to { transform: translateX(420%) skewX(-18deg); } }
+
+  .dust {
+    position: absolute;
+    bottom: -8px;
+    border-radius: 50%;
+    background: rgba(255,226,170,.6);
+    pointer-events: none;
+    animation: dust linear infinite;
+  }
+  @keyframes dust {
+    0% { transform: translate(0, 0); opacity: 0; }
+    12% { opacity: .9; }
+    85% { opacity: .5; }
+    100% { transform: translate(var(--dx), -105vh); opacity: 0; }
+  }
+
+  /* Loading card */
+  .loader {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: grid;
+    place-content: center;
+    gap: 10px;
+    text-align: center;
+    background: #000;
+    color: #d6ae78;
+    transition: opacity 1.2s ease, visibility 1.2s;
+  }
+  .loader b { font: 400 clamp(44px, 9vw, 92px)/1 UnifrakturMaguntia, serif; }
+  .loader span { font: 500 12px Oswald, sans-serif; letter-spacing: .3em; text-transform: uppercase; color: #8d6f4c; animation: pulse 1.6s ease-in-out infinite; }
+  .loader.done { opacity: 0; visibility: hidden; }
+  @keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }
 
   /* Letterbox */
-  .bar {
-    position: fixed;
-    left: 0;
-    right: 0;
-    height: var(--bar);
-    background: #000;
-    z-index: 20;
-  }
+  .bar { position: fixed; left: 0; right: 0; height: var(--bar); background: #000; z-index: 20; }
   .bar.top { top: 0; }
   .bar.bottom {
     bottom: 0;
@@ -113,7 +155,7 @@
     min-height: 34px;
     cursor: pointer;
     list-style: none;
-    transition: background .2s, color .2s, transform .1s;
+    transition: background .2s, transform .1s;
   }
   .controls button:hover, .credits summary:hover { background: rgba(214,174,120,.12); }
   .controls button:active, .credits summary:active { transform: translateY(1px); }
@@ -135,15 +177,41 @@
   }
   .credits a { color: #e8c592; }
 
-  /* ---------- Background clippings ---------- */
+  /* =========================================================
+     BACKGROUND CLIPPINGS (static: zero animation cost)
+     ========================================================= */
   .clip {
     position: absolute;
     overflow: hidden;
+    contain: layout paint;
     padding: 10px 11px;
     color: var(--ink);
-    background: var(--noise), linear-gradient(170deg, var(--p1), var(--p2));
+    background: var(--noise, none), linear-gradient(170deg, var(--p1), var(--p2));
     box-shadow: 0 8px 18px rgba(0,0,0,.6), inset 0 0 34px rgba(100,50,12,.4);
     font: 7.6px/1.32 "Old Standard TT", serif;
+  }
+  .clip.torn { box-shadow: inset 0 0 26px rgba(100,50,12,.5); }
+  .clip.stain::before {
+    content: "";
+    position: absolute;
+    width: 110px;
+    height: 104px;
+    right: 8%;
+    bottom: 12%;
+    border-radius: 50%;
+    border: 5px solid rgba(110,58,18,.16);
+    box-shadow: inset 0 0 18px rgba(110,58,18,.14);
+    pointer-events: none;
+  }
+  .clip.curl::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, transparent 48%, rgba(0,0,0,.35) 50%, #e9cb9d 52%, #c99d63 100%);
+    box-shadow: -2px -2px 6px rgba(0,0,0,.25);
   }
   .clip h5 {
     font: 700 var(--hs, 15px)/1 Oswald, sans-serif;
@@ -160,47 +228,137 @@
   .clip .table { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; font: 500 8.5px/1.55 Oswald, sans-serif; text-transform: uppercase; }
   .clip .table span:nth-child(even) { text-align: right; font-variant-numeric: tabular-nums; }
   .clip .letter { display: grid; place-items: center; height: 100%; border: 3px solid var(--ink); }
-  .clip .letter .big { font-size: var(--fs, 110px); }
   .clip .vmast { display: flex; gap: 8px; height: 100%; }
   .clip .vmast b { writing-mode: vertical-rl; transform: rotate(180deg); font: 400 32px UnifrakturMaguntia, serif; border-left: 2px solid var(--ink); padding-left: 4px; }
   .clip .ad { border: 3px double var(--ink); height: 100%; padding: 8px; text-align: center; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
   .clip .ad strong { font: 400 24px/1 UnifrakturMaguntia, serif; }
   .clip .ad em { font: 600 9px Oswald, sans-serif; letter-spacing: .18em; text-transform: uppercase; font-style: normal; }
   .clip .ad.inv { background: var(--ink); color: var(--paper-hi); }
-  .clip .mini { height: calc(100% - 26px); }
+  .clip .mini { position: relative; height: calc(100% - 26px); overflow: hidden; border: 1.5px solid var(--ink); }
+  .clip .mini img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) sepia(.5) contrast(1.25) brightness(.85); }
+  .clip .mini::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(30,15,5,.28) 34%, transparent 40%) 0 0 / 3px 3px;
+    box-shadow: inset 0 0 24px rgba(15,8,3,.7);
+  }
+  .clip .credit { font: italic 7px "Old Standard TT", serif; text-align: right; margin-top: 3px; }
 
-  /* ---------- Featured front pages ---------- */
+  /* Wall decorations */
+  .tape {
+    position: absolute;
+    z-index: 8;
+    width: 74px;
+    height: 22px;
+    background: linear-gradient(180deg, rgba(246,232,196,.62), rgba(226,206,160,.5));
+    box-shadow: 0 1px 2px rgba(0,0,0,.25);
+    clip-path: polygon(3% 0, 97% 4%, 100% 30%, 97% 62%, 100% 100%, 2% 96%, 0 66%, 3% 34%);
+  }
+  .pin {
+    position: absolute;
+    z-index: 8;
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e2c08a, #7a4b1d 55%, #3a1f0a);
+    box-shadow: 3px 4px 4px rgba(0,0,0,.55);
+  }
+  .circled {
+    position: absolute;
+    z-index: 8;
+    border: 2.5px solid rgba(118,26,14,.62);
+    border-radius: 50%;
+    border-left-color: rgba(118,26,14,.35);
+  }
+  .note {
+    position: absolute;
+    z-index: 8;
+    font: 400 15px/1.2 "Homemade Apple", cursive;
+    color: rgba(110,24,12,.78);
+    white-space: nowrap;
+  }
+
+  /* =========================================================
+     FEATURED FRONT PAGES
+     ========================================================= */
   .front {
     position: absolute;
     z-index: 10;
-    padding: 16px 22px 22px;
-    background: var(--noise), linear-gradient(165deg, var(--paper-hi), var(--paper-mid) 62%, var(--paper-lo));
+    padding: 14px 22px 16px;
+    background: var(--noise, none), linear-gradient(165deg, var(--paper-hi), var(--paper-mid) 62%, var(--paper-lo));
     box-shadow: 0 34px 70px rgba(0,0,0,.75), inset 0 0 60px rgba(100,48,12,.45);
     opacity: 0;
     transform: rotate(var(--r));
+    text-shadow: 0 0 .4px rgba(34,18,10,.55);
+  }
+  .front::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, transparent 49.5%, rgba(60,28,8,.2) 50%, rgba(255,238,205,.16) 50.5%, transparent 51.4%),
+      linear-gradient(90deg, transparent 49.6%, rgba(60,28,8,.12) 50%, rgba(255,238,205,.1) 50.4%, transparent 51%),
+      radial-gradient(ellipse at 88% 8%, rgba(110,60,18,.2), transparent 22%),
+      radial-gradient(ellipse at 6% 96%, rgba(110,60,18,.22), transparent 20%);
+  }
+  .front.stained::before {
+    content: "";
+    position: absolute;
+    z-index: 5;
+    width: 150px;
+    height: 142px;
+    right: 18px;
+    bottom: 40px;
+    border-radius: 50%;
+    border: 7px solid rgba(110,58,18,.15);
+    box-shadow: inset 0 0 22px rgba(110,58,18,.12), 0 0 0 2px rgba(110,58,18,.05);
+    pointer-events: none;
   }
   .front.in { opacity: 1; animation: spinIn 1.5s cubic-bezier(.2,.75,.25,1) backwards; }
   .front.shown { opacity: 1; }
   .front.out { opacity: 0; transition: opacity .9s ease; }
   @keyframes spinIn {
-    0%   { transform: rotate(calc(var(--r) - 1080deg)) scale(.04); opacity: 0; filter: blur(6px); }
+    0%   { transform: rotate(calc(var(--r) - 1080deg)) scale(.04); opacity: 0; }
     30%  { opacity: 1; }
-    80%  { transform: rotate(calc(var(--r) + 2deg)) scale(1.04); filter: blur(0); }
+    80%  { transform: rotate(calc(var(--r) + 2deg)) scale(1.04); }
+    92%  { transform: rotate(calc(var(--r) - .6deg)) scale(.995); }
     100% { transform: rotate(var(--r)) scale(1); }
   }
+  /* Only the page on camera animates: everything else holds still and costs nothing */
+  .front:not(.active) *, .front:not(.active) *::before, .front:not(.active) *::after { animation-play-state: paused !important; }
 
   .f-mast {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
     align-items: center;
+    gap: 10px;
     border-top: 3px solid var(--ink);
     border-bottom: 1px solid var(--ink);
-    padding: 2px 0 4px;
-    font: 600 9.5px Oswald, sans-serif;
+    padding: 3px 0 4px;
+  }
+  .f-mast b { font: 400 44px/1 UnifrakturMaguntia, serif; }
+  .f-ear {
+    border: 1px solid var(--ink);
+    padding: 3px 6px;
+    font: 500 8px/1.25 Oswald, sans-serif;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    justify-self: start;
+    max-width: 120px;
+  }
+  .f-ear strong { display: block; font: 400 12px Anton, sans-serif; letter-spacing: .06em; }
+  .f-ear.r { justify-self: end; text-align: right; }
+  .f-dateline {
+    display: flex;
+    justify-content: space-between;
+    border-bottom: 3px double var(--ink);
+    padding: 3px 0;
+    font: 600 8.5px Oswald, sans-serif;
     letter-spacing: .16em;
     text-transform: uppercase;
   }
-  .f-mast b { font: 400 42px/1 UnifrakturMaguntia, serif; letter-spacing: 0; text-transform: none; }
   .f-banner {
     background: var(--ink);
     color: var(--paper-hi);
@@ -209,7 +367,8 @@
     text-transform: uppercase;
     text-align: center;
     padding: 5px 0 4px;
-    margin: 9px 0 8px;
+    margin: 8px 0 6px;
+    text-shadow: none;
   }
   .f-head {
     font: 400 78px/.9 Anton, sans-serif;
@@ -217,10 +376,12 @@
     text-align: center;
     letter-spacing: -.005em;
     margin: 6px 0 10px;
+    text-shadow: .6px 0 0 rgba(120,40,10,.22), 0 0 .5px rgba(34,18,10,.6);
   }
   .f-head.sm { font-size: 62px; }
   .f-deck { font: italic 17px/1.3 "Old Standard TT", serif; text-align: center; margin: 0 auto 12px; max-width: 46ch; }
-  .f-cap { font: italic 11px "Old Standard TT", serif; text-align: center; margin: 6px 0 10px; }
+  .f-cap { font: italic 11px "Old Standard TT", serif; text-align: center; margin: 5px 0 8px; }
+  .f-photocred { font: 500 7.5px Oswald, sans-serif; letter-spacing: .14em; text-transform: uppercase; text-align: right; margin-top: 3px; opacity: .8; }
   .f-cols {
     column-count: 3;
     column-gap: 14px;
@@ -229,10 +390,20 @@
     text-align: justify;
     hyphens: auto;
   }
-  .f-cols.two { column-count: 2; }
   .f-cols.one { column-count: 1; }
   .f-cols p { margin-bottom: 6px; }
   .f-cols p:first-child::first-letter { float: left; font: 400 40px/.8 UnifrakturMaguntia, serif; padding: 4px 5px 0 0; }
+  .f-index {
+    margin-top: 8px;
+    border-top: 1px solid var(--ink);
+    padding-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font: 500 8px Oswald, sans-serif;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
   .f-side {
     position: absolute;
     left: -14px;
@@ -245,16 +416,19 @@
     letter-spacing: .3em;
     padding: 12px 5px;
     text-transform: uppercase;
+    text-shadow: none;
   }
   .f-split { display: grid; grid-template-columns: 1.25fr 1fr; gap: 16px; align-items: start; }
 
-  /* ---------- Moving photographs ---------- */
+  /* =========================================================
+     MOVING PHOTOGRAPHS (every moving part is its own GPU layer)
+     ========================================================= */
   .mphoto { position: relative; overflow: hidden; background: #1a0f08; border: 2px solid var(--ink); }
   .r45  { aspect-ratio: 4 / 5; }
   .r169 { aspect-ratio: 16 / 9; }
   .r1610 { aspect-ratio: 16 / 10; }
   .r32  { aspect-ratio: 3 / 2; }
-  .mphoto img {
+  .mphoto > img {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -262,29 +436,36 @@
     object-fit: cover;
     filter: grayscale(1) sepia(.55) contrast(1.2) brightness(.86);
   }
-  .mphoto .overlay { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .layer { position: absolute; pointer-events: none; }
+  .layer svg { display: block; width: 100%; height: 100%; overflow: visible; }
   .mphoto::before {
     content: "";
     position: absolute;
     inset: 0;
-    z-index: 3;
+    z-index: 6;
     pointer-events: none;
     box-shadow: inset 0 0 45px rgba(15,8,3,.85);
-    background: linear-gradient(90deg, transparent 49.7%, rgba(255,236,200,.28) 50%, transparent 50.3%) 0 0 / 260% 100%;
-    animation: scratch 2.9s infinite steps(8), breathe 3.4s ease-in-out infinite;
+    background: radial-gradient(circle, rgba(30,15,5,.16) 34%, transparent 40%) 0 0 / 3px 3px;
   }
-  .mphoto::after {
-    content: "";
+  .scratch {
     position: absolute;
     inset: 0;
-    z-index: 4;
+    z-index: 7;
     pointer-events: none;
-    background: var(--noise), repeating-linear-gradient(0deg, rgba(0,0,0,.08) 0 1px, transparent 1px 3px);
-    mix-blend-mode: multiply;
-    animation: grainShift .5s steps(3) infinite;
+    background: linear-gradient(90deg, transparent 49.8%, rgba(255,236,200,.34) 50%, transparent 50.25%);
+    animation: scratchMove 3.1s steps(9) infinite;
   }
-  @keyframes scratch { 0% { background-position: 6% 0; } 100% { background-position: 96% 0; } }
-  @keyframes breathe { 0%, 100% { opacity: .8; } 50% { opacity: 1; } }
+  .pgrain {
+    position: absolute;
+    inset: -30px;
+    z-index: 7;
+    pointer-events: none;
+    background-image: var(--grain, none);
+    opacity: .22;
+    animation: grainShift .45s steps(3) infinite;
+  }
+  .pflick { position: absolute; inset: 0; z-index: 7; background: #000; pointer-events: none; animation: filmFlicker 3.3s infinite steps(1); }
+  @keyframes scratchMove { from { transform: translateX(-46%); } to { transform: translateX(44%); } }
 
   .kb  { animation: kb1 16s ease-in-out infinite alternate; }
   .kb2 { animation-name: kb2; animation-duration: 19s; }
@@ -294,45 +475,41 @@
   @keyframes kb3 { from { transform: scale(1.06) translate(-2%, 2%); } to { transform: scale(1.22) translate(2%, -1%); } }
 
   /* Sirius */
-  .sb-body { filter: blur(1.3px); opacity: .94; }
-  .sb-head { transform-box: view-box; transform-origin: 200px 330px; animation: thrash 3s ease-in-out infinite; }
-  .sb-eyes { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
-  .sb-mouth { transform-box: fill-box; transform-origin: center; animation: shout 3s ease-in-out infinite; }
-  .sb-sway { transform-box: view-box; transform-origin: 200px 500px; animation: sway 6s ease-in-out infinite; }
+  .sb-rig { inset: 0; transform-origin: 50% 100%; animation: sway 6s ease-in-out infinite; }
+  .sb-body, .sb-head { inset: 0; filter: blur(1.2px); opacity: .95; }
+  .sb-head { transform-origin: 50% 66%; animation: thrash 3s ease-in-out infinite; }
+  .flash { position: absolute; inset: 0; z-index: 5; background: #fff4dc; opacity: 0; animation: flash 7s infinite; pointer-events: none; }
   @keyframes thrash {
     0%, 100% { transform: rotate(0); } 10% { transform: rotate(-11deg); } 20% { transform: rotate(9deg); }
     30% { transform: rotate(-7deg); } 42% { transform: rotate(5deg); } 60% { transform: rotate(0); }
   }
-  @keyframes blink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(.1); } }
-  @keyframes shout { 0%, 100% { transform: scale(1, 1); } 12%, 42% { transform: scale(1.25, 3.6); } }
-  @keyframes sway  { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-10px); } 65% { transform: translateX(9px) rotate(1deg); } }
-  .flash { position: absolute; inset: 0; z-index: 2; background: #fff4dc; opacity: 0; animation: flash 7s infinite; pointer-events: none; }
+  @keyframes sway { 0%, 100% { transform: translateX(0); } 30% { transform: translateX(-2.5%); } 65% { transform: translateX(2.2%) rotate(1deg); } }
   @keyframes flash { 0%, 95% { opacity: 0; } 96% { opacity: .9; } 100% { opacity: 0; } }
 
   /* Dementors + fog */
-  .dem1 { animation: haunt 10s ease-in-out infinite alternate; }
-  .dem2 { animation: haunt 13s ease-in-out -4s infinite alternate-reverse; }
-  .hem { transform-box: fill-box; transform-origin: 50% 0; animation: tatter 1.1s ease-in-out infinite alternate; }
+  .dem { filter: blur(1.3px); }
+  .dem.d1 { left: 30%; top: 2%; width: 22%; animation: haunt 10s ease-in-out infinite alternate; }
+  .dem.d2 { left: 62%; top: 14%; width: 11%; opacity: .55; animation: haunt 13s ease-in-out -4s infinite alternate-reverse; }
+  .dem .breath { width: 100%; height: 100%; transform-origin: 50% 0; animation: billow 1.4s ease-in-out infinite alternate; }
   @keyframes haunt {
-    0% { transform: translate(-90px, 14px); } 30% { transform: translate(-20px, -10px); }
-    60% { transform: translate(40px, 18px); } 100% { transform: translate(110px, -6px); }
+    0% { transform: translate(-90%, 8%); } 30% { transform: translate(-20%, -6%); }
+    60% { transform: translate(45%, 10%); } 100% { transform: translate(110%, -4%); }
   }
-  @keyframes tatter { from { transform: skewX(-7deg) scaleY(1); } to { transform: skewX(8deg) scaleY(1.07); } }
+  @keyframes billow { from { transform: scale(1, 1) skewX(-2deg); } to { transform: scale(1.04, 1.07) skewX(3deg); } }
   .fog {
     position: absolute;
     left: -40%;
     width: 180%;
     height: 50%;
     bottom: -12%;
-    z-index: 1;
+    z-index: 3;
     pointer-events: none;
     background:
-      radial-gradient(ellipse at 25% 60%, rgba(236,220,192,.55), transparent 58%),
-      radial-gradient(ellipse at 70% 45%, rgba(236,220,192,.42), transparent 55%);
-    filter: blur(10px);
+      radial-gradient(ellipse at 25% 60%, rgba(236,220,192,.5), transparent 58%),
+      radial-gradient(ellipse at 70% 45%, rgba(236,220,192,.38), transparent 55%);
     animation: fogDrift 15s ease-in-out infinite alternate;
   }
-  .fog.b { bottom: 8%; height: 40%; opacity: .7; animation-duration: 11s; animation-direction: alternate-reverse; }
+  .fog.b { bottom: 8%; height: 40%; opacity: .6; z-index: 1; animation-duration: 11s; animation-direction: alternate-reverse; }
   @keyframes fogDrift { from { transform: translateX(-12%); } to { transform: translateX(12%); } }
 
   /* Storm */
@@ -340,36 +517,33 @@
     position: absolute;
     inset: -45%;
     z-index: 1;
-    background: conic-gradient(from 0deg, transparent, rgba(0,0,0,.4), transparent 28%, rgba(0,0,0,.32), transparent 58%, rgba(0,0,0,.36), transparent 86%);
-    mix-blend-mode: multiply;
+    background: conic-gradient(from 0deg, transparent, rgba(0,0,0,.28), transparent 28%, rgba(0,0,0,.22), transparent 58%, rgba(0,0,0,.26), transparent 86%);
     animation: spin 38s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .bolt { position: absolute; inset: 0; z-index: 2; background: #fff6e2; opacity: 0; animation: lightning 6.5s infinite; pointer-events: none; }
-  .zig { opacity: 0; animation: lightning 6.5s infinite; }
+  .bolt { position: absolute; inset: 0; z-index: 4; background: #fff6e2; opacity: 0; animation: lightning 6.5s infinite; pointer-events: none; }
+  .zig { inset: 0; z-index: 4; opacity: 0; animation: lightning 6.5s infinite; }
   @keyframes lightning { 0%, 86% { opacity: 0; } 87% { opacity: .85; } 88% { opacity: 0; } 90% { opacity: .65; } 92%, 100% { opacity: 0; } }
-  .crow { animation: crowFly 9s linear infinite; }
+  .crow { left: 0; top: 0; z-index: 3; width: 34px; height: 14px; animation: crowFly 9s linear infinite; }
   .crow .wings { transform-box: fill-box; transform-origin: center; animation: crowFlap .32s ease-in-out infinite alternate; }
-  @keyframes crowFly { from { transform: translate(-60px, 150px); } to { transform: translate(720px, 50px); } }
+  @keyframes crowFly { from { transform: translate(-60px, 140px) scale(var(--s, 1)); } to { transform: translate(640px, 30px) scale(var(--s, 1)); } }
   @keyframes crowFlap { from { transform: scaleY(1); } to { transform: scaleY(-.5); } }
 
   /* Waving family */
-  .fam { filter: blur(.7px); }
-  .dem1, .dem2 { filter: blur(1.4px); }
+  .fam { left: 0; right: 0; bottom: 0; height: 100%; opacity: .9; }
   .arm { transform-box: fill-box; transform-origin: 0% 100%; animation: wave .45s ease-in-out infinite alternate; }
-  .fam g:nth-child(2n) .arm { animation-delay: -.2s; }
-  .fam g:nth-child(3n) .arm { animation-delay: -.33s; animation-duration: .38s; }
+  .famg g:nth-child(2n) .arm { animation-delay: -.2s; }
+  .famg g:nth-child(3n) .arm { animation-delay: -.33s; animation-duration: .38s; }
   .jump { animation: jump .9s ease-in-out infinite; }
   @keyframes wave { from { transform: rotate(-25deg); } to { transform: rotate(20deg); } }
-  @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+  @keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
   /* Walking wizards */
-  .walkers { filter: blur(.5px); }
-  .walker { animation: walk 17s linear infinite; }
-  .walker.w2 { animation-duration: 22s; animation-direction: reverse; animation-delay: -6s; }
-  .walker.w3 { animation-duration: 19s; animation-delay: -12s; }
-  .walker .step { animation: stepBob .55s ease-in-out infinite; }
-  @keyframes walk { from { transform: translateX(-80px); } to { transform: translateX(700px); } }
+  .walker { left: 0; bottom: 2%; width: 40px; height: 110px; z-index: 3; filter: blur(.6px); animation: walk 17s linear infinite; }
+  .walker.w2 { bottom: 5%; width: 30px; height: 84px; opacity: .8; animation-duration: 23s; animation-direction: reverse; animation-delay: -6s; }
+  .walker.w3 { bottom: 1%; width: 44px; height: 118px; animation-duration: 20s; animation-delay: -12s; }
+  .walker .step { width: 100%; height: 100%; animation: stepBob .55s ease-in-out infinite; }
+  @keyframes walk { from { transform: translateX(-60px); } to { transform: translateX(640px); } }
   @keyframes stepBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
 
   /* Pause */
@@ -377,14 +551,12 @@
 
   @media (orientation: portrait) {
     :root { --bar: 6vh; }
-    .bar .title span { display: none; }
   }
   @media (max-width: 600px) {
     .bar.bottom { letter-spacing: .12em; font-size: 11px; gap: 8px; }
     .bar .title { display: none; }
     .controls { flex: 1; justify-content: space-between; }
   }
-
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; }
   }
@@ -393,186 +565,222 @@
 <body>
 
 <div class="viewport" id="viewport" aria-label="Montaje animado de El Profeta. Hacé clic para pasar al siguiente titular.">
-  <div class="camera" id="camera">
-    <div class="wall" id="wall">
+  <div class="rig">
+    <div class="camera" id="camera">
+      <div class="wall" id="wall">
 
-      <!-- ===== Front 1: Sirius Black ===== -->
-      <article class="front" id="f1" style="left:1240px; top:760px; width:600px; --r:-2deg">
-        <header class="f-mast"><span>Nº 47 · Londres</span><b>El Profeta</b><span>Siete Knuts</span></header>
-        <div class="f-banner">Alerta del Ministerio</div>
-        <h2 class="f-head">Sirius Black<br>sigue prófugo</h2>
-        <div class="f-split">
-          <div>
-            <figure class="mphoto r45">
-              <img class="kb kb2" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Eastern_State_Penitentiary_-_Philadelphia_Pennsylvania_-_Cell_Interior_-_01.jpg/960px-Eastern_State_Penitentiary_-_Philadelphia_Pennsylvania_-_Cell_Interior_-_01.jpg" alt="Celda abovedada de piedra">
-              <svg class="overlay" viewBox="0 0 400 500" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-                <defs>
-                  <radialGradient id="sbFace" cx="62%" cy="38%" r="70%">
-                    <stop offset="0" stop-color="#3a2817"/>
-                    <stop offset=".55" stop-color="#160c06"/>
-                    <stop offset="1" stop-color="#0b0604"/>
-                  </radialGradient>
-                </defs>
-                <g class="sb-sway">
-                  <g class="sb-body">
-                    <path d="M50 500 C62 404 128 362 200 358 C272 362 338 404 350 500 Z" fill="#0b0604"/>
-                    <g class="sb-head">
+        <!-- ===== Front 1: Sirius Black ===== -->
+        <article class="front" id="f1" style="left:1240px; top:760px; width:620px; --r:-2deg">
+          <header class="f-mast">
+            <div class="f-ear"><strong>Recompensa</strong>10.000 galeones</div>
+            <b>El Profeta</b>
+            <div class="f-ear r"><strong>Clima</strong>Niebla en el norte</div>
+          </header>
+          <div class="f-dateline"><span>Lunes 23 de noviembre</span><span>Año CCXIV · Nº 47</span><span>Siete Knuts</span></div>
+          <div class="f-banner">Alerta del Ministerio</div>
+          <h2 class="f-head">Sirius Black<br>sigue prófugo</h2>
+          <div class="f-split">
+            <div>
+              <figure class="mphoto r45">
+                <img class="kb kb2" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/7/75/Eastern_State_Penitentiary_-_Philadelphia_Pennsylvania_-_Cell_Interior_-_01.jpg/960px-Eastern_State_Penitentiary_-_Philadelphia_Pennsylvania_-_Cell_Interior_-_01.jpg" alt="Celda abovedada de piedra">
+                <div class="layer sb-rig">
+                  <div class="layer sb-body">
+                    <svg viewBox="0 0 400 500" aria-hidden="true">
+                      <path d="M50 500 C62 404 128 362 200 358 C272 362 338 404 350 500 Z" fill="#0b0604"/>
                       <rect x="180" y="290" width="40" height="80" fill="#0b0604"/>
+                      <rect x="128" y="418" width="144" height="50" fill="#120c07" stroke="#6b5a44" stroke-width="2"/>
+                      <text x="200" y="452" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="24" fill="#cdb58f" letter-spacing="4">390 · AZK</text>
+                    </svg>
+                  </div>
+                  <div class="layer sb-head">
+                    <svg viewBox="0 0 400 500" aria-hidden="true">
+                      <defs>
+                        <radialGradient id="sbFace" cx="62%" cy="38%" r="70%">
+                          <stop offset="0" stop-color="#3a2817"/>
+                          <stop offset=".55" stop-color="#160c06"/>
+                          <stop offset="1" stop-color="#0b0604"/>
+                        </radialGradient>
+                      </defs>
                       <path d="M128 230 C120 150 160 108 200 108 C245 108 282 150 274 232 C282 290 292 342 268 376 C255 332 250 314 244 300 L156 300 C150 314 145 332 132 376 C108 342 118 290 128 230 Z" fill="#0b0604"/>
                       <ellipse cx="200" cy="236" rx="58" ry="74" fill="url(#sbFace)"/>
-                      <path d="M150 170 C138 210 140 260 156 300 M246 168 C262 214 258 262 244 300 M168 130 C150 160 146 200 150 236 M232 128 C252 160 256 200 250 236" stroke="#0b0604" stroke-width="9" fill="none" stroke-linecap="round"/>
-                      <path d="M132 214 C122 270 128 330 120 380 M268 214 C280 270 274 330 284 384 M150 120 C132 150 124 190 124 232" stroke="#0b0604" stroke-width="7" fill="none" stroke-linecap="round"/>
+                      <path d="M142 150 C150 128 172 116 200 116 C230 116 252 130 260 156 C248 142 230 136 214 140 C206 160 196 168 178 172 C168 160 156 152 142 150 Z" fill="#0b0604"/>
+                      <path d="M140 240 C138 270 144 296 156 318 L146 322 C134 296 130 268 132 240 Z M260 240 C262 270 256 296 244 318 L254 322 C266 296 270 268 268 240 Z" fill="#0b0604"/>
                       <path d="M268 190 C276 150 252 116 214 110" stroke="#a5865f" stroke-width="3" fill="none" opacity=".5"/>
                       <path d="M286 300 C290 330 286 356 276 372" stroke="#a5865f" stroke-width="2" fill="none" opacity=".35"/>
-                      <g class="sb-eyes">
-                        <ellipse cx="180" cy="232" rx="4" ry="1.8" fill="#cbb08a" opacity=".4"/>
-                        <ellipse cx="220" cy="232" rx="4" ry="1.8" fill="#cbb08a" opacity=".4"/>
-                      </g>
-                      <ellipse class="sb-mouth" cx="200" cy="284" rx="13" ry="4" fill="#000" opacity=".8"/>
-                    </g>
-                    <rect x="128" y="418" width="144" height="50" fill="#120c07" stroke="#6b5a44" stroke-width="2"/>
-                    <text x="200" y="452" text-anchor="middle" font-family="Oswald, sans-serif" font-weight="600" font-size="24" fill="#cdb58f" letter-spacing="4">390 · AZK</text>
-                  </g>
-                </g>
-              </svg>
-              <div class="flash"></div>
-            </figure>
-            <p class="f-cap">El fugitivo, fotografiado en Azkaban antes de su fuga.</p>
+                      <ellipse cx="180" cy="232" rx="4" ry="1.8" fill="#cbb08a" opacity=".4"/>
+                      <ellipse cx="220" cy="232" rx="4" ry="1.8" fill="#cbb08a" opacity=".4"/>
+                      <ellipse cx="200" cy="284" rx="13" ry="9" fill="#000" opacity=".75"/>
+                    </svg>
+                  </div>
+                </div>
+                <div class="flash"></div>
+                <div class="pflick"></div><div class="pgrain"></div><div class="scratch"></div>
+              </figure>
+              <div class="f-photocred">Fotografía: archivo de Azkaban</div>
+              <p class="f-cap">El fugitivo, fotografiado en su celda antes de la fuga.</p>
+            </div>
+            <div class="f-cols one">
+              <p>El Ministerio de Magia confirmó anoche que Sirius Black, el único prisionero que logró escapar de Azkaban, continúa en libertad. Los aurores rastrean la costa norte tras varios avistamientos que aún no fueron confirmados.</p>
+              <p>«Pedimos a la comunidad mágica que no intente enfrentarlo», declaró el ministro Cornelius Fudge a las puertas del Atrio. «Ante cualquier sospecha, notifiquen de inmediato a la Oficina de Aurores».</p>
+              <p>Se ofrece una recompensa de 10.000 galeones por información que permita su captura. El Primer Ministro muggle también fue informado.</p>
+              <p><em>Continúa en la página 3.</em></p>
+            </div>
           </div>
-          <div class="f-cols one">
-            <p>El Ministerio de Magia confirmó anoche que Sirius Black, el único prisionero que logró escapar de Azkaban, continúa en libertad. Los aurores rastrean la costa norte tras varios avistamientos que aún no fueron confirmados.</p>
-            <p>«Pedimos a la comunidad mágica que no intente enfrentarlo», declaró el ministro Cornelius Fudge a las puertas del Atrio. «Ante cualquier sospecha, notifiquen de inmediato a la Oficina de Aurores».</p>
-            <p>Se ofrece una recompensa de 10.000 galeones por información que permita su captura. El Primer Ministro muggle también fue informado.</p>
-            <p><em>Continúa en la página 3.</em></p>
-          </div>
-        </div>
-      </article>
+          <div class="f-index"><span>Quidditch · p. 4</span><span>Correo de las brujas · p. 9</span><span>Horóscopo · p. 11</span></div>
+        </article>
 
-      <!-- ===== Front 2: Dementors ===== -->
-      <article class="front" id="f2" style="left:2150px; top:230px; width:660px; --r:1.5deg">
-        <header class="f-mast"><span>Edición vespertina</span><b>El Profeta</b><span>Siete Knuts</span></header>
-        <div class="f-banner">Última hora</div>
-        <h2 class="f-head sm">Dementores custodiarán Hogwarts</h2>
-        <p class="f-deck">El Ministerio desoye las protestas del director Dumbledore y envía a los guardianes de Azkaban al colegio.</p>
-        <figure class="mphoto r169">
-          <img class="kb" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Alnwick_Castle_2011.JPG/960px-Alnwick_Castle_2011.JPG" alt="Castillo medieval sobre una colina" style="filter: grayscale(1) sepia(.5) contrast(1.25) brightness(.62)">
-          <div class="fog b"></div>
-          <svg class="overlay" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="z-index:1">
-            <defs>
-              <linearGradient id="demFade" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#050302" stop-opacity=".95"/>
-                <stop offset=".6" stop-color="#050302" stop-opacity=".7"/>
-                <stop offset="1" stop-color="#050302" stop-opacity="0"/>
-              </linearGradient>
-            </defs>
-            <g class="dem1"><g transform="translate(90 0) scale(1.25)" fill="url(#demFade)">
-              <path d="M150 20 C165 20 172 35 170 50 C176 66 180 85 180 104 L120 104 C120 85 126 66 132 50 C130 35 137 20 150 20 Z"/>
-              <path class="hem" d="M120 103 L180 103 C182 112 183 118 182 122 L176 113 L172 126 L166 115 L160 130 L154 117 L148 132 L142 117 L136 128 L131 113 L124 124 C121 116 120 110 120 103 Z"/>
+        <!-- ===== Front 2: Dementors ===== -->
+        <article class="front" id="f2" style="left:2150px; top:230px; width:660px; --r:1.5deg">
+          <header class="f-mast">
+            <div class="f-ear"><strong>Edición</strong>Vespertina</div>
+            <b>El Profeta</b>
+            <div class="f-ear r"><strong>Hogsmeade</strong>Visitas suspendidas</div>
+          </header>
+          <div class="f-dateline"><span>Lunes 23 de noviembre</span><span>Año CCXIV · Nº 47</span><span>Siete Knuts</span></div>
+          <div class="f-banner">Última hora</div>
+          <h2 class="f-head sm">Dementores custodiarán Hogwarts</h2>
+          <p class="f-deck">El Ministerio desoye las protestas del director Dumbledore y envía a los guardianes de Azkaban al colegio.</p>
+          <figure class="mphoto r169">
+            <img class="kb" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e1/Alnwick_Castle_2011.JPG/960px-Alnwick_Castle_2011.JPG" alt="Castillo medieval sobre una colina" style="filter: grayscale(1) sepia(.5) contrast(1.25) brightness(.62)">
+            <div class="fog b"></div>
+            <div class="layer dem d1"><div class="breath"><svg viewBox="115 15 100 120" aria-hidden="true">
+              <defs><linearGradient id="demFade" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#050302" stop-opacity=".95"/><stop offset=".6" stop-color="#050302" stop-opacity=".7"/><stop offset="1" stop-color="#050302" stop-opacity="0"/>
+              </linearGradient></defs>
+              <path d="M150 20 C165 20 172 35 170 50 C176 66 180 85 180 104 C182 112 183 118 182 122 L176 113 L172 126 L166 115 L160 130 L154 117 L148 132 L142 117 L136 128 L131 113 L124 124 C121 116 120 110 120 104 C120 85 126 66 132 50 C130 35 137 20 150 20 Z" fill="url(#demFade)"/>
               <ellipse cx="151" cy="42" rx="9" ry="11" fill="#000"/>
-              <path d="M168 62 C185 70 195 72 205 66 L209 71 L202 74 L211 77 L200 79 C190 81 178 77 166 72 Z"/>
-            </g></g>
-            <g class="dem2"><g transform="translate(320 40) scale(.7)" fill="url(#demFade)" opacity=".6">
-              <path d="M150 20 C165 20 172 35 170 50 C176 66 180 85 180 104 L120 104 C120 85 126 66 132 50 C130 35 137 20 150 20 Z"/>
-              <path class="hem" d="M120 103 L180 103 C182 112 183 118 182 122 L176 113 L172 126 L166 115 L160 130 L154 117 L148 132 L142 117 L136 128 L131 113 L124 124 C121 116 120 110 120 103 Z"/>
-            </g></g>
-          </svg>
-          <div class="fog"></div>
-        </figure>
-        <p class="f-cap">Un dementor sobrevuela los terrenos del colegio al caer la tarde.</p>
-        <div class="f-cols">
-          <p>Por primera vez en siglos, los guardianes de Azkaban vigilarán las entradas del colegio. El director Albus Dumbledore manifestó su «profundo desacuerdo» con la medida.</p>
-          <p>Los alumnos tendrán prohibido salir del castillo después del anochecer, y las visitas a Hogsmeade requerirán autorización firmada por madres, padres o tutores.</p>
-          <p>«Los dementores no distinguen entre culpables e inocentes», advirtió un profesor que prefirió no dar su nombre.</p>
-        </div>
-      </article>
+              <path d="M168 62 C185 70 195 72 205 66 L209 71 L202 74 L211 77 L200 79 C190 81 178 77 166 72 Z" fill="#050302" opacity=".85"/>
+            </svg></div></div>
+            <div class="layer dem d2"><div class="breath"><svg viewBox="115 15 100 120" aria-hidden="true">
+              <path d="M150 20 C165 20 172 35 170 50 C176 66 180 85 180 104 C182 112 183 118 182 122 L176 113 L172 126 L166 115 L160 130 L154 117 L148 132 L142 117 L136 128 L131 113 L124 124 C121 116 120 110 120 104 C120 85 126 66 132 50 C130 35 137 20 150 20 Z" fill="url(#demFade)"/>
+            </svg></div></div>
+            <div class="fog"></div>
+            <div class="pflick"></div><div class="pgrain"></div><div class="scratch"></div>
+          </figure>
+          <div class="f-photocred">Fotografía: Colin Creevey para El Profeta</div>
+          <p class="f-cap">Un dementor sobrevuela los terrenos del colegio al caer la tarde.</p>
+          <div class="f-cols">
+            <p>Por primera vez en siglos, los guardianes de Azkaban vigilarán las entradas del colegio. El director Albus Dumbledore manifestó su «profundo desacuerdo» con la medida.</p>
+            <p>Los alumnos tendrán prohibido salir del castillo después del anochecer, y las visitas a Hogsmeade requerirán autorización firmada por madres, padres o tutores.</p>
+            <p>«Los dementores no distinguen entre culpables e inocentes», advirtió un profesor que prefirió no dar su nombre.</p>
+          </div>
+          <div class="f-index"><span>Opinión · p. 2</span><span>Escuelas de magia · p. 6</span><span>Avisos · p. 12</span></div>
+        </article>
 
-      <!-- ===== Front 3: He who must not be named ===== -->
-      <article class="front" id="f3" style="left:380px; top:200px; width:600px; --r:-1deg">
-        <div class="f-side">Edición especial</div>
-        <header class="f-mast"><span>Nº 48 · Extra</span><b>El Profeta</b><span>Gratis</span></header>
-        <h2 class="f-head">El que no debe ser nombrado ha regresado</h2>
-        <figure class="mphoto r32">
-          <img class="kb kb3" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/This_is_a_glass_slide_showing_a_dramatic_landscape_of_a_heavy_sky_and_moorland._%287447787618%29.jpg/960px-This_is_a_glass_slide_showing_a_dramatic_landscape_of_a_heavy_sky_and_moorland._%287447787618%29.jpg" alt="Cielo de tormenta sobre un páramo">
-          <div class="swirl"></div>
-          <div class="bolt"></div>
-          <svg class="overlay" viewBox="0 0 640 427" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="z-index:2">
-            <path class="zig" d="M430 0 L408 78 L432 84 L400 168 L428 172 L388 262" stroke="#fff4dc" stroke-width="4" fill="none" stroke-linejoin="bevel"/>
-            <g class="crow" style="animation-delay:0s"><path class="wings" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#0a0604" stroke-width="4" fill="none" stroke-linecap="round"/></g>
-            <g class="crow" style="animation-delay:-2.5s; animation-duration:11s"><path class="wings" d="M-12 0 Q-6 -7 0 0 Q6 -7 12 0" stroke="#0a0604" stroke-width="3.5" fill="none" stroke-linecap="round"/></g>
-            <g class="crow" style="animation-delay:-5.5s; animation-duration:8s"><path class="wings" d="M-10 0 Q-5 -6 0 0 Q5 -6 10 0" stroke="#0a0604" stroke-width="3" fill="none" stroke-linecap="round"/></g>
-            <g class="crow" style="animation-delay:-7s; animation-duration:12s"><path class="wings" d="M-8 0 Q-4 -5 0 0 Q4 -5 8 0" stroke="#0a0604" stroke-width="2.5" fill="none" stroke-linecap="round"/></g>
-          </svg>
-        </figure>
-        <p class="f-cap">Una tormenta antinatural se desató sobre el norte la misma noche del regreso.</p>
-        <div class="f-cols">
-          <p>Tras meses de negaciones, el Ministerio admitió que Aquel-Que-No-Debe-Ser-Nombrado ha vuelto. Varios funcionarios aseguran haberlo visto en el Atrio la noche del viernes.</p>
-          <p>El ministro enfrenta crecientes pedidos de renuncia desde el Wizengamot y desde la propia Oficina de Aurores.</p>
-          <p>Se recomienda a las familias mágicas revisar sus encantamientos protectores y no abrir la puerta a desconocidos.</p>
-        </div>
-      </article>
+        <!-- ===== Front 3: He who must not be named ===== -->
+        <article class="front" id="f3" style="left:380px; top:200px; width:600px; --r:-1deg">
+          <div class="f-side">Edición especial</div>
+          <header class="f-mast">
+            <div class="f-ear"><strong>Extra</strong>Tirada urgente</div>
+            <b>El Profeta</b>
+            <div class="f-ear r"><strong>Gratis</strong>Por orden del Ministerio</div>
+          </header>
+          <div class="f-dateline"><span>Martes 24 de noviembre</span><span>Año CCXIV · Nº 48</span><span>Edición extra</span></div>
+          <h2 class="f-head">El que no debe ser nombrado ha regresado</h2>
+          <figure class="mphoto r32">
+            <img class="kb kb3" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/05/This_is_a_glass_slide_showing_a_dramatic_landscape_of_a_heavy_sky_and_moorland._%287447787618%29.jpg/960px-This_is_a_glass_slide_showing_a_dramatic_landscape_of_a_heavy_sky_and_moorland._%287447787618%29.jpg" alt="Cielo de tormenta sobre un páramo">
+            <div class="swirl"></div>
+            <div class="bolt"></div>
+            <div class="layer zig"><svg viewBox="0 0 640 427" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <path d="M430 0 L408 78 L432 84 L400 168 L428 172 L388 262" stroke="#fff4dc" stroke-width="4" fill="none" stroke-linejoin="bevel"/>
+            </svg></div>
+            <div class="layer crow" style="animation-delay:0s"><svg viewBox="-17 -10 34 14" aria-hidden="true"><path class="wings" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#0a0604" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="layer crow" style="--s:.75; animation-delay:-2.5s; animation-duration:11s"><svg viewBox="-17 -10 34 14" aria-hidden="true"><path class="wings" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#0a0604" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="layer crow" style="--s:.6; animation-delay:-5.5s; animation-duration:8s"><svg viewBox="-17 -10 34 14" aria-hidden="true"><path class="wings" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#0a0604" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="layer crow" style="--s:.5; animation-delay:-7s; animation-duration:12s"><svg viewBox="-17 -10 34 14" aria-hidden="true"><path class="wings" d="M-16 0 Q-8 -9 0 0 Q8 -9 16 0" stroke="#0a0604" stroke-width="3.5" fill="none" stroke-linecap="round"/></svg></div>
+            <div class="pflick"></div><div class="pgrain"></div><div class="scratch"></div>
+          </figure>
+          <div class="f-photocred">Fotografía: corresponsal en el norte</div>
+          <p class="f-cap">Una tormenta antinatural se desató sobre el norte la misma noche del regreso.</p>
+          <div class="f-cols">
+            <p>Tras meses de negaciones, el Ministerio admitió que Aquel-Que-No-Debe-Ser-Nombrado ha vuelto. Varios funcionarios aseguran haberlo visto en el Atrio la noche del viernes.</p>
+            <p>El ministro enfrenta crecientes pedidos de renuncia desde el Wizengamot y desde la propia Oficina de Aurores.</p>
+            <p>Se recomienda a las familias mágicas revisar sus encantamientos protectores y no abrir la puerta a desconocidos.</p>
+          </div>
+          <div class="f-index"><span>Cómo protegerse · p. 2</span><span>Cronología · p. 3</span><span>Testigos · p. 5</span></div>
+        </article>
 
-      <!-- ===== Front 4: Weasleys ===== -->
-      <article class="front" id="f4" style="left:2250px; top:1240px; width:640px; --r:2deg">
-        <header class="f-mast"><span>Sociedad</span><b>El Profeta</b><span>Siete Knuts</span></header>
-        <h2 class="f-head sm">Los Weasley ganan el gran premio de galeones</h2>
-        <figure class="mphoto r1610">
-          <img class="kb" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Giza%2C_Pyramids%2C_Pictures%2C_F._Bonfils%2C_photo_5_of_27_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV01_007.jpg/960px-Giza%2C_Pyramids%2C_Pictures%2C_F._Bonfils%2C_photo_5_of_27_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV01_007.jpg" alt="Pirámides de Guiza en una fotografía del siglo XIX">
-          <svg class="overlay" viewBox="0 0 640 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-            <g transform="translate(150 252) scale(.8)" opacity=".88">
-              <g class="fam" fill="#0d0805" stroke="#0d0805" stroke-width="3" stroke-linecap="round">
-                <g class="jump"><path d="M67 140 L70 100 L80 100 L83 140 Z"/><circle cx="75" cy="94" r="6"/><line class="arm" x1="79" y1="104" x2="91" y2="90"/></g>
-                <g><path d="M97 140 L100 94 L110 94 L113 140 Z"/><circle cx="105" cy="88" r="6"/><line class="arm" x1="109" y1="98" x2="121" y2="84"/></g>
-                <g class="jump" style="animation-delay:-.3s"><path d="M127 140 L130 110 L140 110 L143 140 Z"/><circle cx="135" cy="104" r="6"/><line class="arm" x1="139" y1="114" x2="151" y2="100"/></g>
-                <g><path d="M157 140 L160 96 L170 96 L173 140 Z"/><circle cx="165" cy="90" r="6"/><line class="arm" x1="169" y1="100" x2="181" y2="86"/></g>
-                <g class="jump" style="animation-delay:-.6s"><path d="M187 140 L190 114 L200 114 L203 140 Z"/><circle cx="195" cy="108" r="6"/><line class="arm" x1="199" y1="118" x2="211" y2="104"/></g>
-                <g><path d="M217 140 L220 102 L230 102 L233 140 Z"/><circle cx="225" cy="96" r="6"/><line class="arm" x1="229" y1="106" x2="241" y2="92"/></g>
+        <!-- ===== Front 4: Weasleys ===== -->
+        <article class="front" id="f4" style="left:2250px; top:1240px; width:640px; --r:2deg">
+          <header class="f-mast">
+            <div class="f-ear"><strong>Sociedad</strong>y espectáculos</div>
+            <b>El Profeta</b>
+            <div class="f-ear r"><strong>Sorteo</strong>Gran premio anual</div>
+          </header>
+          <div class="f-dateline"><span>Domingo 22 de noviembre</span><span>Año CCXIV · Nº 46</span><span>Siete Knuts</span></div>
+          <h2 class="f-head sm">Los Weasley ganan el gran premio de galeones</h2>
+          <figure class="mphoto r1610">
+            <img class="kb" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/07/Giza%2C_Pyramids%2C_Pictures%2C_F._Bonfils%2C_photo_5_of_27_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV01_007.jpg/960px-Giza%2C_Pyramids%2C_Pictures%2C_F._Bonfils%2C_photo_5_of_27_-_Archivio_fotografico_Museo_Egizio%2C_Turin_INV01_007.jpg" alt="Pirámides de Guiza en una fotografía del siglo XIX">
+            <div class="layer fam"><svg viewBox="0 0 640 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+              <g transform="translate(150 252) scale(.8)">
+                <g class="famg" fill="#0d0805" stroke="#0d0805" stroke-width="3" stroke-linecap="round">
+                  <g class="jump"><path d="M67 140 L70 100 L80 100 L83 140 Z"/><circle cx="75" cy="94" r="6"/><line class="arm" x1="79" y1="104" x2="91" y2="90"/></g>
+                  <g><path d="M97 140 L100 94 L110 94 L113 140 Z"/><circle cx="105" cy="88" r="6"/><line class="arm" x1="109" y1="98" x2="121" y2="84"/></g>
+                  <g class="jump" style="animation-delay:-.3s"><path d="M127 140 L130 110 L140 110 L143 140 Z"/><circle cx="135" cy="104" r="6"/><line class="arm" x1="139" y1="114" x2="151" y2="100"/></g>
+                  <g><path d="M157 140 L160 96 L170 96 L173 140 Z"/><circle cx="165" cy="90" r="6"/><line class="arm" x1="169" y1="100" x2="181" y2="86"/></g>
+                  <g class="jump" style="animation-delay:-.6s"><path d="M187 140 L190 114 L200 114 L203 140 Z"/><circle cx="195" cy="108" r="6"/><line class="arm" x1="199" y1="118" x2="211" y2="104"/></g>
+                  <g><path d="M217 140 L220 102 L230 102 L233 140 Z"/><circle cx="225" cy="96" r="6"/><line class="arm" x1="229" y1="106" x2="241" y2="92"/></g>
+                </g>
               </g>
-            </g>
-          </svg>
-        </figure>
-        <p class="f-cap">La familia saluda a los lectores desde Egipto.</p>
-        <div class="f-cols">
-          <p>Arthur Weasley, del Departamento contra el Uso Indebido de Artefactos Muggles, ganó el sorteo anual de El Profeta.</p>
-          <p>La familia gastará parte del premio en un viaje a Egipto, donde el hijo mayor, Bill, trabaja como rompedor de maldiciones para Gringotts.</p>
-          <p>«Volveremos a tiempo para el inicio de clases», aseguró la señora Weasley.</p>
-        </div>
-      </article>
+            </svg></div>
+            <div class="pflick"></div><div class="pgrain"></div><div class="scratch"></div>
+          </figure>
+          <div class="f-photocred">Fotografía: gentileza de la familia Weasley</div>
+          <p class="f-cap">La familia saluda a los lectores desde Egipto.</p>
+          <div class="f-cols">
+            <p>Arthur Weasley, del Departamento contra el Uso Indebido de Artefactos Muggles, ganó el sorteo anual de El Profeta.</p>
+            <p>La familia gastará parte del premio en un viaje a Egipto, donde el hijo mayor, Bill, trabaja como rompedor de maldiciones para Gringotts.</p>
+            <p>«Volveremos a tiempo para el inicio de clases», aseguró la señora Weasley.</p>
+          </div>
+          <div class="f-index"><span>Viajes · p. 7</span><span>Gringotts · p. 8</span><span>Crucigrama · p. 12</span></div>
+        </article>
 
-      <!-- ===== Front 5: Ministry ===== -->
-      <article class="front" id="f5" style="left:420px; top:1320px; width:620px; --r:-1.5deg">
-        <header class="f-mast"><span>Política</span><b>El Profeta</b><span>Siete Knuts</span></header>
-        <div class="f-banner">Ministerio de Magia</div>
-        <h2 class="f-head sm">Fudge: «La situación está bajo control»</h2>
-        <figure class="mphoto r169">
-          <img class="kb kb2" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/The_Old_War_Office_Building%2C_Whitehall.jpg/960px-The_Old_War_Office_Building%2C_Whitehall.jpg" alt="Fachada de un edificio gubernamental en Whitehall">
-          <svg class="overlay" viewBox="0 0 640 360" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
-            <g class="walkers" fill="#0b0604">
-              <g class="walker"><g class="step" transform="translate(0 350)">
-                <path d="M-6 -78 L1 -104 L8 -78 Z"/><rect x="-12" y="-80" width="25" height="4"/><circle cx="1" cy="-70" r="8"/><path d="M-11 -62 L12 -62 L18 0 L-18 0 Z"/>
-              </g></g>
-              <g class="walker w2"><g class="step" transform="translate(0 344) scale(.8)">
-                <path d="M-6 -78 L1 -104 L8 -78 Z"/><rect x="-12" y="-80" width="25" height="4"/><circle cx="1" cy="-70" r="8"/><path d="M-11 -62 L12 -62 L18 0 L-18 0 Z"/>
-              </g></g>
-              <g class="walker w3"><g class="step" transform="translate(0 356) scale(1.1)">
-                <circle cx="1" cy="-74" r="8"/><path d="M-12 -64 L13 -64 L20 0 L-20 0 Z"/><rect x="18" y="-50" width="10" height="16"/>
-              </g></g>
-            </g>
-          </svg>
-        </figure>
-        <p class="f-cap">Funcionarios entran y salen del Ministerio durante toda la noche.</p>
-        <div class="f-cols">
-          <p>Cornelius Fudge descartó renunciar y aseguró que el Ministerio «tiene todo bajo control». Fuentes internas, sin embargo, hablan de reuniones de emergencia a puertas cerradas.</p>
-          <p>El Wizengamot sesionará el lunes y se espera la publicación de un nuevo decreto educativo.</p>
-          <p>Mientras tanto, la Red Flu registra demoras en todo el país.</p>
-        </div>
-      </article>
+        <!-- ===== Front 5: Ministry ===== -->
+        <article class="front stained" id="f5" style="left:420px; top:1320px; width:620px; --r:-1.5deg">
+          <header class="f-mast">
+            <div class="f-ear"><strong>Política</strong>Edición matutina</div>
+            <b>El Profeta</b>
+            <div class="f-ear r"><strong>Red Flu</strong>Demoras en todo el país</div>
+          </header>
+          <div class="f-dateline"><span>Miércoles 25 de noviembre</span><span>Año CCXIV · Nº 49</span><span>Siete Knuts</span></div>
+          <div class="f-banner">Ministerio de Magia</div>
+          <h2 class="f-head sm">Fudge: «La situación está bajo control»</h2>
+          <figure class="mphoto r169">
+            <img class="kb kb2" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/5/5a/The_Old_War_Office_Building%2C_Whitehall.jpg/960px-The_Old_War_Office_Building%2C_Whitehall.jpg" alt="Fachada de un edificio gubernamental en Whitehall">
+            <div class="layer walker"><div class="step"><svg viewBox="-20 -106 40 106" aria-hidden="true" fill="#0b0604">
+              <path d="M-6 -78 L1 -104 L8 -78 Z"/><rect x="-12" y="-80" width="25" height="4"/><circle cx="1" cy="-70" r="8"/><path d="M-11 -62 L12 -62 L18 0 L-18 0 Z"/>
+            </svg></div></div>
+            <div class="layer walker w2"><div class="step"><svg viewBox="-20 -106 40 106" aria-hidden="true" fill="#0b0604">
+              <path d="M-6 -78 L1 -104 L8 -78 Z"/><rect x="-12" y="-80" width="25" height="4"/><circle cx="1" cy="-70" r="8"/><path d="M-11 -62 L12 -62 L18 0 L-18 0 Z"/>
+            </svg></div></div>
+            <div class="layer walker w3"><div class="step"><svg viewBox="-22 -84 52 84" aria-hidden="true" fill="#0b0604">
+              <circle cx="1" cy="-74" r="8"/><path d="M-12 -64 L13 -64 L20 0 L-20 0 Z"/><rect x="18" y="-50" width="10" height="16"/>
+            </svg></div></div>
+            <div class="pflick"></div><div class="pgrain"></div><div class="scratch"></div>
+          </figure>
+          <div class="f-photocred">Fotografía: Dennis Creevey para El Profeta</div>
+          <p class="f-cap">Funcionarios entran y salen del Ministerio durante toda la noche.</p>
+          <div class="f-cols">
+            <p>Cornelius Fudge descartó renunciar y aseguró que el Ministerio «tiene todo bajo control». Fuentes internas, sin embargo, hablan de reuniones de emergencia a puertas cerradas.</p>
+            <p>El Wizengamot sesionará el lunes y se espera la publicación de un nuevo decreto educativo.</p>
+            <p>Mientras tanto, la Red Flu registra demoras en todo el país.</p>
+          </div>
+          <div class="f-index"><span>Wizengamot · p. 3</span><span>Decretos · p. 4</span><span>Opinión · p. 10</span></div>
+        </article>
 
+      </div>
     </div>
   </div>
   <div class="tint"></div>
+  <div class="beam" id="beam"></div>
   <div class="grain"></div>
   <div class="flicker"></div>
   <div class="vignette"></div>
+</div>
+
+<div class="loader" id="loader" role="status">
+  <b>El Profeta</b>
+  <span>Imprimiendo la edición…</span>
 </div>
 
 <div class="bar top" aria-hidden="true"></div>
@@ -603,6 +811,29 @@
   const camera = document.getElementById("camera");
   const wall = document.getElementById("wall");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const lite = matchMedia("(pointer: coarse)").matches || innerWidth < 760;
+
+  /* ---------- Textures: drawn once to a bitmap (cheap to paint, unlike SVG noise) ---------- */
+  const texture = (size, paint) => {
+    const c = document.createElement("canvas");
+    c.width = c.height = size;
+    const ctx = c.getContext("2d");
+    const img = ctx.createImageData(size, size);
+    for (let i = 0; i < img.data.length; i += 4) paint(img.data, i);
+    ctx.putImageData(img, 0, 0);
+    return `url(${c.toDataURL("image/png")})`;
+  };
+  const root = document.documentElement.style;
+  root.setProperty("--noise", texture(160, (d, i) => {
+    const r = Math.random();
+    d[i] = 78; d[i + 1] = 42; d[i + 2] = 14;
+    d[i + 3] = r < .55 ? Math.floor(Math.random() * 46) : r > .985 ? 120 : 0;
+  }));
+  root.setProperty("--grain", texture(200, (d, i) => {
+    const v = Math.random() < .5 ? 0 : 255;
+    d[i] = d[i + 1] = d[i + 2] = v;
+    d[i + 3] = Math.random() < .35 ? Math.floor(Math.random() * 140) : 0;
+  }));
 
   /* ---------- Seeded random so the wall is always the same ---------- */
   let seed = 47;
@@ -621,12 +852,10 @@
     "investigación denuncia familia magos brujas ciudadanos comunidad seguridad fuentes oficiales declaración " +
     "ayer anoche semana pasada nuevo antiguo misterioso peligroso secreto oficial reciente polémico").split(" ");
   const sentence = () => {
-    const n = Math.floor(rand(7, 15));
-    const words = Array.from({ length: n }, () => pick(vocab));
-    const s = words.join(" ");
+    const s = Array.from({ length: Math.floor(rand(7, 15)) }, () => pick(vocab)).join(" ");
     return s[0].toUpperCase() + s.slice(1) + ".";
   };
-  const para = () => Array.from({ length: Math.floor(rand(3, 6)) }, sentence).join(" ");
+  const para = () => Array.from({ length: Math.floor(rand(3, 5)) }, sentence).join(" ");
 
   const heads = [
     "Ministro programado para el próximo mes", "Nuevo mago falso", "Competencia de viajes en Transilvania",
@@ -641,66 +870,109 @@
     ["Ollivanders", "Varitas desde el 382 a. C."], ["Flourish y Blotts", "Libros de hechizos"],
     ["El Caldero Chorreante", "Habitaciones y cerveza"], ["Madame Malkin", "Túnicas para toda ocasión"],
     ["Honeydukes", "Dulces de Hogsmeade"]];
+  const notes = ["¿Black?", "¡Avisar a Dumbledore!", "Ver pág. 3", "Falso", "¿Pettigrew?", "Guardar", "¡Mentira!", "Hagrid sabe algo"];
   const photos = [...document.querySelectorAll(".front img")].map(img => img.src);
 
+  // Each clipping returns its HTML plus whether it has a headline worth circling.
   const clipHTML = (w, h) => {
     const r = R();
     if (r < .44) {
       const cols = w > 260 ? 3 : w > 190 ? 2 : 1;
-      return `<h5 style="--hs:${Math.round(rand(13, 24))}px">${pick(heads)}</h5>
-        <div class="cols" style="--c:${cols}">${Array.from({ length: 6 }, () => `<p>${para()}</p>`).join("")}</div>`;
+      const hs = Math.round(rand(13, 24));
+      const count = Math.max(2, Math.round((w * h) / 20000));
+      return { headline: hs, html: `<h5 style="--hs:${hs}px">${pick(heads)}</h5>
+        <div class="cols" style="--c:${cols}">${Array.from({ length: count }, () => `<p>${para()}</p>`).join("")}</div>` };
     }
     if (r < .56) {
-      const img = pick(photos);
-      const kb = pick(["kb", "kb kb2", "kb kb3"]);
-      return `<div class="kick">${pick(heads)}</div>
-        <div class="mphoto mini"><img class="${kb}" src="${img}" alt="" style="object-position:${Math.round(rand(10, 90))}% ${Math.round(rand(20, 80))}%"></div>`;
+      return { html: `<div class="kick">${pick(heads)}</div>
+        <div class="mini"><img src="${pick(photos)}" alt="" style="object-position:${Math.round(rand(10, 90))}% ${Math.round(rand(20, 80))}%"></div>
+        <div class="credit">Foto: El Profeta</div>` };
     }
     if (r < .67) {
       const rows = teams.slice().sort(() => R() - .5).slice(0, 10)
         .map(t => `<span>${t}</span><span>${Math.floor(rand(10, 390))}</span>`).join("");
-      return `<h5 style="--hs:14px">${pick(["Resultados de Quidditch", "Cambio de galeones", "Precios en el Callejón"])}</h5>
-        <div class="table">${rows}</div><div class="cols" style="--c:1"><p>${para()}</p></div>`;
+      return { html: `<h5 style="--hs:14px">${pick(["Resultados de Quidditch", "Cambio de galeones", "Precios en el Callejón"])}</h5>
+        <div class="table">${rows}</div><div class="cols" style="--c:1"><p>${para()}</p></div>` };
     }
     if (r < .75) {
-      return `<div class="letter"><span class="big" style="--fs:${Math.round(Math.min(w, h) * .55)}px">${pick("HKJPMZ".split(""))}</span></div>`;
+      return { html: `<div class="letter"><span class="big" style="--fs:${Math.round(Math.min(w, h) * .55)}px">${pick("HKJPMZ".split(""))}</span></div>` };
     }
     if (r < .84) {
-      return `<div class="vmast"><b>El Profeta</b><div class="cols" style="--c:1">${Array.from({ length: 5 }, () => `<p>${para()}</p>`).join("")}</div></div>`;
+      return { html: `<div class="vmast"><b>El Profeta</b><div class="cols" style="--c:1">${Array.from({ length: Math.max(2, Math.round(h / 80)) }, () => `<p>${para()}</p>`).join("")}</div></div>` };
     }
     const [name, line] = pick(ads);
-    return `<div class="ad${R() < .4 ? " inv" : ""}"><em>${pick(["Gran apertura", "Nueva temporada", "Pedidos por lechuza"])}</em><strong>${name}</strong><em>${line}</em></div>`;
+    return { html: `<div class="ad${R() < .4 ? " inv" : ""}"><em>${pick(["Gran apertura", "Nueva temporada", "Pedidos por lechuza"])}</em><strong>${name}</strong><em>${line}</em></div>` };
   };
 
-  /* ---------- Build the wall of clippings ---------- */
+  const torn = () => {
+    const steps = 16, top = [], bottom = [];
+    for (let i = 0; i <= steps; i++) top.push(`${(i / steps * 100).toFixed(1)}% ${rand(0, 2.4).toFixed(1)}%`);
+    for (let i = steps; i >= 0; i--) bottom.push(`${(i / steps * 100).toFixed(1)}% ${(100 - rand(0, 2.4)).toFixed(1)}%`);
+    return `polygon(${top.concat(bottom).join(",")})`;
+  };
+
+  /* ---------- Build the wall ---------- */
   const frag = document.createDocumentFragment();
+  const decor = [];
   let x = -40;
   while (x < W) {
     const cw = Math.round(rand(170, 330));
     let y = -40;
     while (y < H) {
       const ch = Math.round(rand(140, 420));
+      const rot = rand(-1.8, 1.8);
       const el = document.createElement("div");
       el.className = "clip";
-      const light = rand(0, 1);
-      el.style.cssText = `left:${x}px;top:${y}px;width:${cw}px;height:${ch}px;transform:rotate(${rand(-1.8, 1.8).toFixed(2)}deg);z-index:${Math.floor(rand(1, 5))};` +
-        `--p1:hsl(${rand(30, 36)}, ${rand(52, 62)}%, ${68 + light * 8}%);--p2:hsl(${rand(28, 33)}, ${rand(48, 58)}%, ${54 + light * 8}%)`;
-      el.innerHTML = clipHTML(cw, ch);
+      const light = R();
+      el.style.cssText = `left:${x}px;top:${y}px;width:${cw}px;height:${ch}px;transform:rotate(${rot.toFixed(2)}deg);z-index:${Math.floor(rand(1, 5))};` +
+        `--p1:hsl(${rand(30, 36).toFixed(1)},${rand(52, 62).toFixed(1)}%,${(68 + light * 8).toFixed(1)}%);--p2:hsl(${rand(28, 33).toFixed(1)},${rand(48, 58).toFixed(1)}%,${(54 + light * 8).toFixed(1)}%)`;
+      const { html, headline } = clipHTML(cw, ch);
+      el.innerHTML = html;
+      if (R() < .25) { el.classList.add("torn"); el.style.clipPath = torn(); }
+      if (R() < .12) el.classList.add("stain");
+      if (R() < .12) el.classList.add("curl");
       frag.appendChild(el);
+
+      const d = R();
+      if (d < .2) decor.push(`<i class="tape" style="left:${x + cw / 2 - 37 + rand(-30, 30)}px;top:${y - 9}px;transform:rotate(${rand(-8, 8).toFixed(1)}deg)"></i>`);
+      else if (d < .32) decor.push(`<i class="pin" style="left:${x + rand(8, cw - 20)}px;top:${y + rand(4, 12)}px"></i>`);
+      if (headline && R() < .14) {
+        decor.push(`<i class="circled" style="left:${x + 2}px;top:${y + 2}px;width:${cw - 6}px;height:${headline * 2.4 + 14}px;transform:rotate(${(rot + rand(-3, 3)).toFixed(1)}deg)"></i>`);
+      }
+      if (R() < .05) {
+        decor.push(`<span class="note" style="left:${x + rand(10, cw * .5)}px;top:${y + rand(20, ch - 30)}px;transform:rotate(${rand(-12, 8).toFixed(1)}deg)">${pick(notes)}</span>`);
+      }
       y += ch + rand(-14, 6);
     }
     x += cw + rand(-16, 4);
   }
   wall.prepend(frag);
+  const decorLayer = document.createElement("div");
+  decorLayer.innerHTML = decor.join("");
+  wall.insertBefore(decorLayer, wall.querySelector(".front"));
+
+  /* ---------- Ambient dust ---------- */
+  const dustCount = lite ? 7 : 16;
+  for (let i = 0; i < dustCount; i++) {
+    const s = document.createElement("span");
+    s.className = "dust";
+    const dur = 14 + Math.random() * 16;
+    const size = 1.5 + Math.random() * 2.5;
+    s.style.cssText = `left:${Math.random() * 100}%;width:${size}px;height:${size}px;--dx:${(Math.random() - .5) * 140}px;animation-duration:${dur}s;animation-delay:${-Math.random() * dur}s`;
+    viewport.appendChild(s);
+  }
+  if (lite) document.getElementById("beam").remove();
 
   /* ---------- Camera ---------- */
+  const fronts = [...document.querySelectorAll(".front")];
   const state = { cx: W / 2, cy: H / 2, s: .5, rx: 0, ry: 0, rz: 0 };
   const barH = () => document.querySelector(".bar.top").offsetHeight;
   const apply = (dur = 0, ease = "cubic-bezier(.65,0,.3,1)") => {
     const t = dur ? `transform ${dur}ms ${ease}` : "none";
     camera.style.transition = t;
     wall.style.transition = dur ? `${t}, opacity 2.5s ease` : "opacity 2.5s ease";
-    camera.style.transform = `rotateX(${state.rx}deg) rotateY(${state.ry}deg) rotateZ(${state.rz}deg)`;
+    // 2D only: a 3D-tilted 3200px wall forces the browser to repaint all of it at once (multi-second stalls).
+    camera.style.transform = `rotate(${state.rz}deg)`;
     wall.style.transform = `scale(${state.s}) translate(${-state.cx}px, ${-state.cy}px)`;
   };
   const fit = el => {
@@ -709,6 +981,7 @@
     return { cx: el.offsetLeft + w / 2, cy: el.offsetTop + h / 2, s: Math.min(aw / w, ah / h) };
   };
   const wideScale = () => Math.min(innerWidth / W, (innerHeight - 2 * barH()) / H) * 1.25;
+  const setActive = el => fronts.forEach(f => f.classList.toggle("active", f === el));
 
   let paused = false, skipNow = false;
   const wait = ms => new Promise(res => {
@@ -734,18 +1007,19 @@
     el.classList.remove("in", "out");
     void el.offsetWidth;
     el.classList.add("in");
+    setActive(el);
     state.s = f.s;
     apply(1500, "cubic-bezier(.2,.7,.2,1)");
     await wait(1700);
     state.s = f.s * 1.07;
     apply(6500, "linear");
     await wait(6500);
+    setActive(null);
   };
 
   const panShot = () => async () => {
-    const s = Math.max(innerWidth / 1150, .45);
     Object.assign(state, {
-      cx: rand(500, W - 500), cy: rand(400, H - 400), s,
+      cx: rand(500, W - 500), cy: rand(400, H - 400), s: Math.max(innerWidth / 1150, .45),
       rx: rand(6, 12), ry: rand(-14, 14), rz: rand(-5, 5)
     });
     retarget = () => apply(0);
@@ -761,7 +1035,7 @@
     if (reset) {
       document.querySelectorAll(".front.in").forEach(f => f.classList.add("out"));
       await wait(1000);
-      document.querySelectorAll(".front").forEach(f => f.classList.remove("in", "out"));
+      fronts.forEach(f => f.classList.remove("in", "out"));
     }
   };
 
@@ -773,11 +1047,12 @@
   addEventListener("resize", () => retarget());
 
   if (reduced) {
-    document.querySelectorAll(".front").forEach(f => f.classList.add("shown"));
+    fronts.forEach(f => f.classList.add("shown"));
     Object.assign(state, { cx: W / 2, cy: H / 2, s: wideScale(), rx: 0, ry: 0, rz: 0 });
     retarget = () => { state.s = wideScale(); apply(0); };
     apply(0);
     wall.classList.add("lit");
+    document.getElementById("loader").classList.add("done");
     return;
   }
 
@@ -797,13 +1072,40 @@
     if (e.code === "ArrowRight") skipNow = true;
   });
 
-  /* ---------- Run ---------- */
-  const start = fit(document.getElementById("f1"));
-  Object.assign(state, { cx: start.cx, cy: start.cy, s: start.s * .7 });
-  apply(0);
-  requestAnimationFrame(() => wall.classList.add("lit"));
+  /* ---------- Run (only after fonts and photos are ready, so nothing decodes mid-shot) ---------- */
+  const loader = document.getElementById("loader");
+  const timeout = ms => new Promise(res => setTimeout(res, ms));
+  const ready = Promise.all([
+    document.fonts.ready,
+    ...[...document.images].map(img => img.decode().catch(() => {}))
+  ]);
 
   (async () => {
+    await Promise.race([ready, timeout(8000)]);
+    // Resolves once the browser renders 12 smooth frames in a row (or after 5 s, whichever comes first).
+    const frames = () => new Promise(r => {
+      let smooth = 0, last = performance.now();
+      const t0 = last;
+      const step = now => {
+        smooth = now - last < 34 ? smooth + 1 : 0;
+        last = now;
+        if (smooth >= 12 || now - t0 > 5000) r(); else requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    // Pre-paint the wall behind the loading card (wide and close-up) so the first shots never stall.
+    wall.style.transition = "none";
+    wall.classList.add("lit");
+    Object.assign(state, { cx: W / 2, cy: H / 2, s: wideScale() });
+    apply(0);
+    await frames();
+    await timeout(250);
+    const start = fit(document.getElementById("f1"));
+    Object.assign(state, { cx: start.cx, cy: start.cy, s: start.s * .7 });
+    apply(0);
+    await frames();
+    await timeout(250);
+    loader.classList.add("done");
     while (true) {
       for (const shot of sequence) await shot();
     }
